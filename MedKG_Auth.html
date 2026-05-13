@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MedKG — Медицинская платформа Кыргызстана</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --p:#0B5E42;--p1:#E0F5EE;--p2:#1AA37A;--p3:#5DCAA5;
+  --acc:#2563A8;--acc1:#E6F1FB;--acc2:#85B7EB;
+  --danger:#C03030;--danger1:#FCEBEB;--warn:#C97A10;--warn1:#FAEEDA;
+  --g50:#F8F9FA;--g100:#F1F3F5;--g200:#E9ECEF;--g300:#DEE2E6;
+  --g500:#ADB5BD;--g600:#6C757D;--g700:#495057;--g900:#212529;
+  --font:'Segoe UI',system-ui,sans-serif;
+  --r-sm:8px;--r-md:12px;--r-lg:16px;--r-full:9999px;
+  --sh:0 4px 12px rgba(0,0,0,.08);
+}
+html,body{height:100%;font-family:var(--font);background:#f0f2f5;color:var(--g900);font-size:15px;-webkit-font-smoothing:antialiased;}
+#app{min-height:100vh;display:flex;justify-content:center;}
+.shell{width:100%;max-width:480px;min-height:100vh;background:#fff;display:flex;flex-direction:column;box-shadow:var(--sh);}
+.scr{display:none;flex-direction:column;flex:1;min-height:100vh;}.scr.on{display:flex;}
+
+/* ── AUTH SCREENS ─────────────────────────────── */
+.auth-hero{background:var(--p);padding:44px 28px 32px;text-align:center;}
+.auth-logo{width:70px;height:70px;border-radius:22px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 14px;}
+.auth-hero h1{color:#fff;font-size:24px;font-weight:600;}
+.auth-hero p{color:rgba(255,255,255,.65);font-size:13px;margin-top:4px;}
+.auth-body{flex:1;padding:24px 20px 28px;background:#fff;}
+.auth-body h2{font-size:18px;font-weight:500;margin-bottom:18px;color:var(--g900);}
+.form-label{display:block;font-size:12px;color:var(--g600);margin-bottom:5px;font-weight:500;}
+.inp{width:100%;padding:12px 14px;border-radius:var(--r-md);border:.5px solid var(--g300);background:var(--g50);font-size:14px;color:var(--g900);outline:none;font-family:var(--font);margin-bottom:12px;transition:border-color .15s;}
+.inp:focus{border-color:var(--p2);background:#fff;}
+.inp.error{border-color:var(--danger);background:var(--danger1);}
+.err-msg{font-size:12px;color:var(--danger);margin:-8px 0 10px;display:none;}
+.err-msg.on{display:block;}
+.role-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:6px 0 18px;}
+.rc{border:1.5px solid var(--g200);border-radius:var(--r-lg);padding:14px 10px;text-align:center;cursor:pointer;background:#fff;transition:all .15s;}
+.rc:hover,.rc.sel{border-color:var(--p);background:var(--p1);}
+.ri{font-size:22px;margin-bottom:6px;}.rn{font-size:13px;font-weight:500;}.rd{font-size:11px;color:var(--g500);margin-top:2px;}
+.btn{display:block;width:100%;padding:13px;border-radius:var(--r-md);font-size:14px;font-weight:500;cursor:pointer;border:none;font-family:var(--font);transition:opacity .15s;}
+.btn:hover{opacity:.9;}.btn-p{background:var(--p);color:#fff;}.btn-s{background:transparent;color:var(--p);border:1.5px solid var(--p);}
+.switch-link{text-align:center;margin-top:16px;font-size:13px;color:var(--g600);}
+.switch-link span{color:var(--p);cursor:pointer;font-weight:500;}
+.switch-link span:hover{text-decoration:underline;}
+.success-badge{background:var(--p1);border-radius:var(--r-md);padding:10px 14px;font-size:13px;color:#085041;margin-bottom:14px;display:none;}
+.success-badge.on{display:block;}
+
+/* ── MAIN APP ─────────────────────────────────── */
+.main-layout{display:flex;flex:1;min-height:100vh;}
+.sidebar{width:68px;background:var(--p);display:flex;flex-direction:column;align-items:center;padding:16px 0 20px;gap:2px;flex-shrink:0;position:sticky;top:0;height:100vh;}
+.sb-logo{font-size:20px;margin-bottom:14px;color:#fff;}
+.sb-sep{width:36px;height:.5px;background:rgba(255,255,255,.15);margin:5px 0;}
+.nav-btn{width:50px;height:50px;border-radius:var(--r-md);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:3px;border:none;background:transparent;transition:background .15s;}
+.nav-btn:hover{background:rgba(255,255,255,.1);}.nav-btn.on{background:rgba(255,255,255,.18);}
+.ni{font-size:18px;color:rgba(255,255,255,.5);}.nl{font-size:8px;color:rgba(255,255,255,.4);text-align:center;line-height:1.1;}
+.nav-btn.on .ni,.nav-btn:hover .ni{color:#fff;}.nav-btn.on .nl,.nav-btn:hover .nl{color:rgba(255,255,255,.85);}
+.content{flex:1;overflow-y:auto;background:var(--g100);}
+.panel{display:none;padding:16px;min-height:100%;}.panel.on{display:block;}
+
+/* ── COMMON COMPONENTS ──────────────────────── */
+.card{background:#fff;border-radius:var(--r-lg);border:.5px solid var(--g200);padding:14px;margin-bottom:10px;}
+.tag{display:inline-block;font-size:10px;padding:2px 8px;border-radius:var(--r-full);font-weight:500;}
+.tag-green{background:var(--p1);color:#085041;}.tag-red{background:var(--danger1);color:#791F1F;}
+.tag-blue{background:var(--acc1);color:#0C447C;}.tag-amber{background:var(--warn1);color:#633806;}
+.irow{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:.5px solid var(--g200);}
+.irow:last-child{border-bottom:none;}
+.ik{font-size:12px;color:var(--g600);}.iv{font-size:12px;font-weight:500;color:var(--g900);}
+.srch{display:flex;align-items:center;gap:8px;background:#fff;border-radius:var(--r-md);padding:10px 14px;border:.5px solid var(--g300);margin-bottom:14px;}
+.srch input{flex:1;border:none;background:transparent;font-size:13px;color:var(--g900);outline:none;}
+.chips{display:flex;gap:7px;overflow-x:auto;margin-bottom:14px;padding-bottom:2px;scrollbar-width:none;}
+.chips::-webkit-scrollbar{display:none;}
+.chip{white-space:nowrap;padding:6px 14px;border-radius:var(--r-full);font-size:12px;cursor:pointer;border:1px solid var(--g300);background:#fff;color:var(--g600);flex-shrink:0;transition:all .15s;}
+.chip.on{background:var(--p);color:#fff;border-color:var(--p);}
+.stitle{font-size:11px;font-weight:600;color:var(--g500);letter-spacing:.6px;text-transform:uppercase;margin-bottom:10px;}
+.info-card{background:#fff;border-radius:var(--r-lg);border:.5px solid var(--g200);padding:14px;margin-bottom:12px;}
+.ict{font-size:11px;font-weight:600;color:var(--p2);letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px;}
+
+/* ── HOME ───────────────────────────────────── */
+.hgreet{background:var(--p);border-radius:var(--r-lg);padding:20px 18px;margin-bottom:14px;position:relative;overflow:hidden;}
+.hgreet::before{content:'';position:absolute;right:-30px;top:-30px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.06);}
+.hgreet h2{color:#fff;font-size:17px;font-weight:500;}
+.hgreet p{color:rgba(255,255,255,.65);font-size:12px;margin-top:3px;}
+.gpills{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;}
+.gpill{background:rgba(255,255,255,.15);border-radius:var(--r-full);padding:4px 12px;font-size:11px;color:#fff;}
+.alert-c{background:var(--warn1);border-radius:var(--r-md);border:.5px solid #EF9F27;padding:12px 14px;display:flex;gap:10px;align-items:flex-start;margin-bottom:14px;}
+.ab-t{font-size:13px;font-weight:500;color:#412402;margin-bottom:2px;}.ab-s{font-size:12px;color:#633806;}
+.qgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.qcard{background:#fff;border-radius:var(--r-lg);border:.5px solid var(--g200);padding:14px 12px;cursor:pointer;transition:all .15s;}
+.qcard:hover{box-shadow:var(--sh);transform:translateY(-1px);}
+.qcard.acc{background:var(--p1);border-color:var(--p3);}
+.qcard.acc .qn{color:var(--p);}
+.qi{font-size:22px;margin-bottom:8px;}.qn{font-size:13px;font-weight:500;}.qs{font-size:11px;color:var(--g500);margin-top:2px;}
+
+/* ── DOCTORS ────────────────────────────────── */
+.doc-card{background:#fff;border-radius:var(--r-lg);border:.5px solid var(--g200);padding:14px;margin-bottom:10px;cursor:pointer;}
+.doc-top{display:flex;gap:12px;align-items:flex-start;}
+.doc-ava{width:50px;height:50px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:500;flex-shrink:0;}
+.dn{font-size:14px;font-weight:500;}.ds{font-size:12px;color:var(--p2);margin-top:1px;}.dm{font-size:11px;color:var(--g500);margin-top:3px;}
+.da{display:inline-block;font-size:11px;padding:2px 8px;border-radius:var(--r-full);margin-top:6px;}
+.af{background:var(--p1);color:#085041;}.ab2{background:var(--danger1);color:#791F1F;}
+.sched{display:none;margin-top:12px;padding-top:12px;border-top:.5px solid var(--g200);}
+.slots{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;}
+.slot{padding:9px;border-radius:var(--r-sm);text-align:center;font-size:12px;border:1px solid var(--g200);}
+.slot.free{background:var(--p1);border-color:var(--p3);color:#085041;cursor:pointer;}
+.slot.free:hover{background:var(--p3);color:#fff;}
+.slot.busy{background:var(--g100);color:var(--g500);text-decoration:line-through;}
+
+/* ── MEDICINES ──────────────────────────────── */
+.med-c{background:#fff;border-radius:var(--r-lg);border:.5px solid var(--g200);padding:14px;margin-bottom:10px;display:flex;gap:12px;}
+.med-ico{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.mn{font-size:14px;font-weight:500;}.mg{font-size:11px;color:var(--g500);margin-top:1px;}.mt2{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;}
+
+/* ── PHARMACY ───────────────────────────────── */
+.ph-hero{background:var(--acc);border-radius:var(--r-lg);padding:16px;margin-bottom:14px;display:flex;align-items:center;gap:12px;}
+.ph-hero h3{color:#fff;font-size:16px;font-weight:500;}.ph-hero p{color:rgba(255,255,255,.65);font-size:12px;margin-top:2px;}
+.fcat-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px;}
+.fcat{background:#fff;border-radius:var(--r-md);border:.5px solid var(--g200);padding:12px 10px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:all .15s;}
+.fcat:hover,.fcat.on{background:var(--acc1);border-color:var(--acc2);}
+.fcn{font-size:12px;font-weight:500;}.fcc{font-size:10px;color:var(--g500);margin-top:1px;}
+.pill-c{background:#fff;border-radius:var(--r-lg);border:.5px solid var(--g200);padding:14px;margin-bottom:9px;display:flex;gap:12px;align-items:center;}
+.pill-v{width:44px;height:20px;border-radius:10px;flex-shrink:0;position:relative;overflow:hidden;}
+.pill-v::after{content:'';position:absolute;left:50%;top:0;bottom:0;width:.5px;background:rgba(255,255,255,.4);}
+.pn{font-size:13px;font-weight:500;}.ps{font-size:11px;color:var(--g500);margin-top:1px;}.pt{display:flex;gap:5px;margin-top:5px;flex-wrap:wrap;}
+.pfb{padding:7px 12px;border-radius:var(--r-sm);background:var(--p1);color:var(--p);font-size:11px;font-weight:500;border:none;cursor:pointer;font-family:var(--font);}
+.pfb:hover{background:var(--p3);color:#fff;}
+
+/* ── MEDPOINTS ──────────────────────────────── */
+.map-ph{background:var(--acc1);border-radius:var(--r-lg);height:120px;border:.5px solid var(--acc2);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;margin-bottom:14px;}
+.map-ph p{font-size:12px;color:#0C447C;font-weight:500;}
+.mp-c{background:#fff;border-radius:var(--r-lg);border:.5px solid var(--g200);padding:14px;margin-bottom:10px;}
+.mp-h{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;}
+.mp-nm{font-size:13px;font-weight:500;}.mp-ad{font-size:11px;color:var(--g600);margin-bottom:3px;}.mp-ph2{font-size:11px;color:var(--g600);margin-bottom:10px;}
+.mp-row{display:flex;gap:8px;}
+.mp-btn{flex:1;padding:8px;border-radius:var(--r-sm);font-size:12px;cursor:pointer;border:.5px solid var(--g300);background:#fff;color:var(--g700);text-align:center;font-family:var(--font);}
+.mp-btn.pr{background:var(--p);color:#fff;border-color:var(--p);}
+
+/* ── PROFILE ────────────────────────────────── */
+.prof-top{background:var(--p);border-radius:var(--r-lg);padding:20px 16px;margin-bottom:14px;display:flex;gap:14px;align-items:center;}
+.ava{width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:500;color:#fff;flex-shrink:0;}
+.pnm{color:#fff;font-size:16px;font-weight:500;}.pph{color:rgba(255,255,255,.65);font-size:12px;margin-top:3px;}
+.pbadge{background:rgba(255,255,255,.18);border-radius:var(--r-full);padding:3px 12px;font-size:11px;color:#fff;display:inline-block;margin-top:7px;}
+
+/* ── MEDCARD ────────────────────────────────── */
+.mc-hero{background:var(--p);border-radius:var(--r-lg);padding:18px 16px;margin-bottom:14px;display:flex;gap:12px;align-items:center;}
+.mcn{color:#fff;font-size:15px;font-weight:500;}.mcid{color:rgba(255,255,255,.6);font-size:11px;margin-top:2px;}
+.qr-box{margin-left:auto;width:46px;height:46px;background:rgba(255,255,255,.2);border-radius:8px;display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:9px;}
+.qr-box div{background:#fff;border-radius:2px;}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:12px;}
+.sc{background:#fff;border-radius:var(--r-md);border:.5px solid var(--g200);padding:12px;text-align:center;}
+.sv{font-size:18px;font-weight:500;}.sk{font-size:11px;color:var(--g500);margin-top:3px;}.sico{font-size:16px;margin-bottom:4px;}
+.hist-item{display:flex;gap:10px;padding:10px 0;border-bottom:.5px solid var(--g200);}
+.hist-item:last-child{border-bottom:none;}
+.hline{display:flex;flex-direction:column;align-items:center;gap:2px;}
+.hdot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}.hvline{width:1px;flex:1;background:var(--g200);min-height:20px;}
+.ht{font-size:13px;font-weight:500;}.hs{font-size:11px;color:var(--g600);margin-top:2px;}.hd{font-size:10px;color:var(--g500);margin-top:3px;}
+
+.mt4{margin-top:4px;}.mt8{margin-top:8px;}.mb12{margin-bottom:12px;}
+.flex-b{display:flex;justify-content:space-between;align-items:center;}
+.text-danger{color:var(--danger);}
+.logout-btn{width:100%;padding:13px;border-radius:var(--r-md);font-size:14px;font-weight:500;cursor:pointer;font-family:var(--font);background:var(--danger1);color:var(--danger);border:1.5px solid var(--danger);margin-top:8px;}
+</style>
+</head>
+<body>
+<div id="app"><div class="shell">
+
+<!-- ══════════════ РЕГИСТРАЦИЯ ══════════════ -->
+<div class="scr on" id="s-register">
+  <div class="auth-hero">
+    <div class="auth-logo">🏥</div>
+    <h1>MedKG</h1>
+    <p>Медицинская платформа Кыргызстана</p>
+  </div>
+  <div class="auth-body">
+    <h2>Создать аккаунт</h2>
+    <div class="success-badge" id="reg-success">✅ Аккаунт создан! Войдите в систему.</div>
+
+    <label class="form-label">Имя и фамилия *</label>
+    <input class="inp" id="r-name" type="text" placeholder="Айбек Токтосунов"/>
+    <div class="err-msg" id="e-rname">Введите имя и фамилию</div>
+
+    <label class="form-label">Номер телефона * (уникальный)</label>
+    <input class="inp" id="r-phone" type="tel" placeholder="+996 700 000 000"/>
+    <div class="err-msg" id="e-rphone">Этот номер уже зарегистрирован!</div>
+
+    <label class="form-label">Пароль * (минимум 6 символов)</label>
+    <input class="inp" id="r-pass" type="password" placeholder="••••••••"/>
+    <div class="err-msg" id="e-rpass">Пароль минимум 6 символов</div>
+
+    <label class="form-label">Подтвердите пароль *</label>
+    <input class="inp" id="r-pass2" type="password" placeholder="••••••••"/>
+    <div class="err-msg" id="e-rpass2">Пароли не совпадают</div>
+
+    <p style="font-size:12px;color:var(--g600);margin-bottom:8px;">Ваша роль:</p>
+    <div class="role-grid">
+      <div class="rc sel" onclick="selRole(this,'register')"><div class="ri">👤</div><div class="rn">Пациент</div><div class="rd">Обычный</div></div>
+      <div class="rc" onclick="selRole(this,'register')"><div class="ri">🎓</div><div class="rn">Студент</div><div class="rd">Учащийся</div></div>
+      <div class="rc" onclick="selRole(this,'register')"><div class="ri">🩺</div><div class="rn">Врач</div><div class="rd">Специалист</div></div>
+      <div class="rc" onclick="selRole(this,'register')"><div class="ri">🏨</div><div class="rn">Мед. пункт</div><div class="rd">Учреждение</div></div>
+    </div>
+
+    <button class="btn btn-p" onclick="doRegister()">Зарегистрироваться</button>
+    <div class="switch-link">Уже есть аккаунт? <span onclick="showLogin()">Войти</span></div>
+  </div>
+</div>
+
+<!-- ══════════════ ВХОД ══════════════ -->
+<div class="scr" id="s-login">
+  <div class="auth-hero">
+    <div class="auth-logo">🏥</div>
+    <h1>MedKG</h1>
+    <p>Медицинская платформа Кыргызстана</p>
+  </div>
+  <div class="auth-body">
+    <h2>Добро пожаловать</h2>
+
+    <label class="form-label">Номер телефона</label>
+    <input class="inp" id="l-phone" type="tel" placeholder="+996 700 000 000"/>
+    <div class="err-msg" id="e-lphone">Аккаунт с таким номером не найден</div>
+
+    <label class="form-label">Пароль</label>
+    <input class="inp" id="l-pass" type="password" placeholder="••••••••"/>
+    <div class="err-msg" id="e-lpass">Неверный пароль</div>
+
+    <button class="btn btn-p" onclick="doLogin()">Войти</button>
+    <div class="switch-link">Нет аккаунта? <span onclick="showRegister()">Зарегистрироваться</span></div>
+  </div>
+</div>
+
+<!-- ══════════════ ГЛАВНОЕ ПРИЛОЖЕНИЕ ══════════════ -->
+<div class="scr" id="s-app">
+  <div class="main-layout">
+    <nav class="sidebar">
+      <div class="sb-logo">🏥</div>
+      <button class="nav-btn on" id="nav-home" onclick="tab('home')"><span class="ni">🏠</span><span class="nl">Главная</span></button>
+      <button class="nav-btn" id="nav-profile" onclick="tab('profile')"><span class="ni">👤</span><span class="nl">Профиль</span></button>
+      <div class="sb-sep"></div>
+      <button class="nav-btn" id="nav-doctors" onclick="tab('doctors')"><span class="ni">🩺</span><span class="nl">Врачи</span></button>
+      <button class="nav-btn" id="nav-medicines" onclick="tab('medicines')"><span class="ni">💊</span><span class="nl">Лекарства</span></button>
+      <button class="nav-btn" id="nav-pharmacy" onclick="tab('pharmacy')"><span class="ni">🧴</span><span class="nl">Аптека</span></button>
+      <div class="sb-sep"></div>
+      <button class="nav-btn" id="nav-medpoints" onclick="tab('medpoints')"><span class="ni">🏥</span><span class="nl">Мед. пункты</span></button>
+      <button class="nav-btn" id="nav-medcard" onclick="tab('medcard')"><span class="ni">🪪</span><span class="nl">Мед. карта</span></button>
+    </nav>
+
+    <div class="content">
+
+      <!-- HOME -->
+      <div class="panel on" id="p-home">
+        <div class="hgreet">
+          <h2 id="home-greet">Добрый день! 👋</h2>
+          <p id="today-date"></p>
+          <div class="gpills">
+            <span class="gpill">📍 Ош</span>
+            <span class="gpill" id="home-role">👤 Пациент</span>
+            <span class="gpill">ГФОМС</span>
+          </div>
+        </div>
+        <div class="alert-c">
+          <span style="font-size:16px;flex-shrink:0;margin-top:1px;">⚠️</span>
+          <div><div class="ab-t">Приём врача через 2 дня</div><div class="ab-s">Д-р Асанова — Терапевт, в 10:00</div></div>
+        </div>
+        <p class="stitle">Быстрый доступ</p>
+        <div class="qgrid">
+          <div class="qcard acc" onclick="tab('doctors')"><div class="qi">🩺</div><div class="qn">Записаться к врачу</div><div class="qs">8 свободных слотов</div></div>
+          <div class="qcard" onclick="tab('pharmacy')"><div class="qi">🧴</div><div class="qn">Аптека и таблетки</div><div class="qs">Найти лекарство</div></div>
+          <div class="qcard" onclick="tab('medcard')"><div class="qi">🪪</div><div class="qn">Моя мед. карта</div><div class="qs">A(II)+, Ош</div></div>
+          <div class="qcard" onclick="tab('medpoints')"><div class="qi">🏥</div><div class="qn">Мед. пункты</div><div class="qs">7 учреждений в Оше</div></div>
+        </div>
+        <p class="stitle">Последние визиты</p>
+        <div class="card" style="padding:8px 14px;">
+          <div class="hist-item"><div class="hline"><div class="hdot" style="background:#1AA37A;"></div><div class="hvline"></div></div><div><div class="ht">Приём терапевта</div><div class="hs">ОРВИ — назначен Парацетамол</div><div class="hd">12 апр 2026 · Поликлиника №1, Ош</div></div></div>
+          <div class="hist-item"><div class="hline"><div class="hdot" style="background:#2563A8;"></div><div class="hvline"></div></div><div><div class="ht">Анализ крови</div><div class="hs">Общий анализ — в норме</div><div class="hd">3 мар 2026 · Синлаб, Ош</div></div></div>
+          <div class="hist-item"><div class="hline"><div class="hdot" style="background:#C97A10;"></div></div><div><div class="ht">ЭКГ</div><div class="hs">Результат: норма</div><div class="hd">10 янв 2026 · Кардиоцентр, Ош</div></div></div>
+        </div>
+      </div>
+
+      <!-- PROFILE -->
+      <div class="panel" id="p-profile">
+        <div class="prof-top">
+          <div class="ava" id="prof-avatar">А</div>
+          <div>
+            <div class="pnm" id="prof-name">Пользователь</div>
+            <div class="pph" id="prof-phone">+996 700 000 000</div>
+            <span class="pbadge" id="prof-badge">👤 Пациент</span>
+          </div>
+        </div>
+        <div class="info-card"><div class="ict">Личные данные</div>
+          <div class="irow"><span class="ik">Имя</span><span class="iv" id="prof-name2">—</span></div>
+          <div class="irow"><span class="ik">Телефон</span><span class="iv" id="prof-phone2">—</span></div>
+          <div class="irow"><span class="ik">Роль</span><span class="iv" id="prof-role">—</span></div>
+          <div class="irow"><span class="ik">Регион</span><span class="iv">Ош</span></div>
+        </div>
+        <div class="info-card"><div class="ict">Медицинский статус</div>
+          <div class="irow"><span class="ik">Группа крови</span><span class="iv"><span class="tag tag-green">A (II) +</span></span></div>
+          <div class="irow"><span class="ik">Аллергии</span><span class="iv text-danger">Пенициллин ⚠️</span></div>
+          <div class="irow"><span class="ik">Хр. болезни</span><span class="iv">Нет</span></div>
+          <div class="irow"><span class="ik">Страхование</span><span class="iv"><span class="tag tag-blue">ГФОМС</span></span></div>
+        </div>
+        <button class="logout-btn" onclick="doLogout()">🚪 Выйти из аккаунта</button>
+      </div>
+
+      <!-- DOCTORS -->
+      <div class="panel" id="p-doctors">
+        <div class="srch"><span style="font-size:14px;color:var(--g500);">🔍</span><input type="text" placeholder="Врач или специальность..." oninput="filterDocs(this.value)"/></div>
+        <div class="chips" id="doc-chips"></div>
+        <div id="doc-list"></div>
+      </div>
+
+      <!-- MEDICINES -->
+      <div class="panel" id="p-medicines">
+        <div class="srch"><span style="font-size:14px;color:var(--g500);">🔍</span><input type="text" placeholder="Название или состав..." oninput="filterMeds(this.value)"/></div>
+        <div class="chips" id="med-chips"></div>
+        <div id="med-list"></div>
+      </div>
+
+      <!-- PHARMACY -->
+      <div class="panel" id="p-pharmacy">
+        <div class="ph-hero"><span style="font-size:32px;">🧴</span><div><h3>Аптека и таблетки</h3><p>Все формы выпуска лекарств КР</p></div></div>
+        <div class="srch"><span style="font-size:14px;color:var(--g500);">🔍</span><input type="text" placeholder="Поиск таблеток, капсул, сиропов..." oninput="filterPills(this.value)"/></div>
+        <p class="stitle">Форма выпуска</p>
+        <div class="fcat-grid" id="pill-forms"></div>
+        <p class="stitle">Препараты</p>
+        <div id="pill-list"></div>
+      </div>
+
+      <!-- MEDPOINTS -->
+      <div class="panel" id="p-medpoints">
+        <div class="map-ph"><span style="font-size:32px;">🗺️</span><p>Карта мед. учреждений — Ош</p></div>
+        <div class="srch"><span style="font-size:14px;color:var(--g500);">🔍</span><input type="text" placeholder="Поиск учреждений..." oninput="filterMPs(this.value)"/></div>
+        <div class="chips" id="mp-chips"></div>
+        <div id="mp-list"></div>
+      </div>
+
+      <!-- MEDCARD -->
+      <div class="panel" id="p-medcard">
+        <div class="mc-hero">
+          <div class="ava" style="width:52px;height:52px;font-size:20px;" id="mc-avatar">А</div>
+          <div><div class="mcn" id="mc-name">Пользователь</div><div class="mcid" id="mc-id">ID: KG-2026-000001</div></div>
+          <div class="qr-box"><div></div><div style="background:transparent"></div><div style="background:transparent"></div><div></div></div>
+        </div>
+        <div class="stat-grid">
+          <div class="sc"><div class="sico">🩸</div><div class="sv">A(II)+</div><div class="sk">Группа крови</div></div>
+          <div class="sc"><div class="sico">⚖️</div><div class="sv">78 кг</div><div class="sk">Вес</div></div>
+          <div class="sc"><div class="sico">📏</div><div class="sv">178 см</div><div class="sk">Рост</div></div>
+          <div class="sc"><div class="sico">💓</div><div class="sv">72 уд/мин</div><div class="sk">Пульс</div></div>
+        </div>
+        <div class="info-card"><div class="ict">Аллергии</div>
+          <div class="irow"><span class="ik">Лекарства</span><span class="iv text-danger">Пенициллин ⚠️</span></div>
+          <div class="irow"><span class="ik">Пища / прочее</span><span class="iv">Нет</span></div>
+        </div>
+        <div class="info-card">
+          <div class="flex-b mb12"><div class="ict" style="margin-bottom:0;">История посещений</div></div>
+          <div class="hist-item"><div class="hline"><div class="hdot" style="background:#1AA37A;"></div><div class="hvline"></div></div><div><div class="ht">Приём терапевта</div><div class="hs">ОРВИ — назначен Парацетамол</div><div class="hd">12 апр 2026 · Поликлиника №1, Ош</div></div></div>
+          <div class="hist-item"><div class="hline"><div class="hdot" style="background:#2563A8;"></div><div class="hvline"></div></div><div><div class="ht">Анализ крови</div><div class="hs">Общий — в норме</div><div class="hd">3 мар 2026 · Синлаб, Ош</div></div></div>
+          <div class="hist-item"><div class="hline"><div class="hdot" style="background:#C97A10;"></div></div><div><div class="ht">ЭКГ</div><div class="hs">Норма</div><div class="hd">10 янв 2026 · Кардиоцентр, Ош</div></div></div>
+        </div>
+        <div class="info-card"><div class="ict">Текущие назначения</div>
+          <div class="irow"><span class="ik">Парацетамол 500мг</span><span class="iv" style="font-size:11px;">3×/день · 5 дней</span></div>
+          <div class="irow"><span class="ik">Амоксициллин 250мг</span><span class="iv" style="font-size:11px;">2×/день · 7 дней</span></div>
+        </div>
+        <button class="btn btn-p mt4" onclick="alert('Скачиваем PDF...')">📄 Скачать PDF карточку</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+</div></div>
+
+<script>
+// ══════════════════════════════════════════════
+//  МААЛЫМАТ БАЗАСЫ (localStorage)
+// ══════════════════════════════════════════════
+function getUsers(){try{return JSON.parse(localStorage.getItem('medkg_users')||'[]');}catch{return[];}}
+function saveUsers(u){localStorage.setItem('medkg_users',JSON.stringify(u));}
+function getSession(){try{return JSON.parse(localStorage.getItem('medkg_session')||'null');}catch{return null;}}
+function saveSession(u){localStorage.setItem('medkg_session',JSON.stringify(u));}
+function clearSession(){localStorage.removeItem('medkg_session');}
+
+// ══════════════════════════════════════════════
+//  СТАРТ — проверяем авторизацию
+// ══════════════════════════════════════════════
+window.onload=function(){
+  document.getElementById('today-date').textContent='Сегодня '+new Date().toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'});
+  const sess=getSession();
+  if(sess){
+    loadUserUI(sess);
+    showScreen('s-app');
+  } else {
+    showScreen('s-register');
+  }
+  buildChips('doc-chips',DOC_CATS,DOC_LABELS,'all',setDocCat);
+  buildChips('med-chips',MED_CATS,MED_LABELS,'all',setMedCat);
+  buildChips('mp-chips',MP_TYPES,MP_LABELS,'all',setMpType);
+  buildPillForms();
+};
+
+function showScreen(id){
+  document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+}
+function showLogin(){
+  clearErrors();
+  showScreen('s-login');
+}
+function showRegister(){
+  clearErrors();
+  showScreen('s-register');
+}
+
+// ══════════════════════════════════════════════
+//  РОЛЬ ТАНДОО
+// ══════════════════════════════════════════════
+let regRole='Пациент', loginRole='Пациент';
+const roleIcons={'Пациент':'👤','Студент':'🎓','Врач':'🩺','Мед. пункт':'🏨'};
+function selRole(el,screen){
+  const grid=el.parentElement;
+  grid.querySelectorAll('.rc').forEach(r=>r.classList.remove('sel'));
+  el.classList.add('sel');
+  if(screen==='register') regRole=el.querySelector('.rn').textContent;
+}
+
+// ══════════════════════════════════════════════
+//  РЕГИСТРАЦИЯ
+// ══════════════════════════════════════════════
+function doRegister(){
+  clearErrors();
+  const name=document.getElementById('r-name').value.trim();
+  const phone=document.getElementById('r-phone').value.trim();
+  const pass=document.getElementById('r-pass').value;
+  const pass2=document.getElementById('r-pass2').value;
+  let ok=true;
+
+  if(name.length<2){showErr('r-name','e-rname','Введите имя и фамилию');ok=false;}
+  if(phone.length<7){showErr('r-phone','e-rphone','Введите корректный номер');ok=false;}
+  if(pass.length<6){showErr('r-pass','e-rpass','Пароль минимум 6 символов');ok=false;}
+  if(pass!==pass2){showErr('r-pass2','e-rpass2','Пароли не совпадают');ok=false;}
+  if(!ok) return;
+
+  const users=getUsers();
+  // Проверяем: уже есть такой номер?
+  const exists=users.find(u=>u.phone===phone);
+  if(exists){showErr('r-phone','e-rphone','Этот номер уже зарегистрирован!');return;}
+
+  // Создаём пользователя
+  const newUser={
+    id:'KG-'+Date.now(),
+    name,phone,
+    pass:btoa(pass), // простое кодирование
+    role:regRole,
+    createdAt:new Date().toLocaleDateString('ru-RU')
+  };
+  users.push(newUser);
+  saveUsers(users);
+
+  // Показываем успех
+  document.getElementById('reg-success').classList.add('on');
+  document.getElementById('r-name').value='';
+  document.getElementById('r-phone').value='';
+  document.getElementById('r-pass').value='';
+  document.getElementById('r-pass2').value='';
+
+  setTimeout(()=>{
+    document.getElementById('reg-success').classList.remove('on');
+    showLogin();
+  },1500);
+}
+
+// ══════════════════════════════════════════════
+//  ВХОД
+// ══════════════════════════════════════════════
+function doLogin(){
+  clearErrors();
+  const phone=document.getElementById('l-phone').value.trim();
+  const pass=document.getElementById('l-pass').value;
+
+  if(phone.length<7){showErr('l-phone','e-lphone','Введите номер телефона');return;}
+  if(pass.length<1){showErr('l-pass','e-lpass','Введите пароль');return;}
+
+  const users=getUsers();
+  const user=users.find(u=>u.phone===phone);
+  if(!user){showErr('l-phone','e-lphone','Аккаунт с таким номером не найден');return;}
+  if(user.pass!==btoa(pass)){showErr('l-pass','e-lpass','Неверный пароль');return;}
+
+  // Сохраняем сессию
+  saveSession(user);
+  loadUserUI(user);
+  showScreen('s-app');
+  tab('home');
+}
+
+// ══════════════════════════════════════════════
+//  ВЫХОД
+// ══════════════════════════════════════════════
+function doLogout(){
+  if(confirm('Выйти из аккаунта?')){
+    clearSession();
+    document.getElementById('l-phone').value='';
+    document.getElementById('l-pass').value='';
+    showScreen('s-login');
+  }
+}
+
+// ══════════════════════════════════════════════
+//  UI — заполняем данные пользователя
+// ══════════════════════════════════════════════
+function loadUserUI(user){
+  const icon=roleIcons[user.role]||'👤';
+  const first=user.name[0].toUpperCase();
+  document.getElementById('home-greet').textContent='Добрый день, '+user.name.split(' ')[0]+' 👋';
+  document.getElementById('home-role').textContent=icon+' '+user.role;
+  document.getElementById('prof-avatar').textContent=first;
+  document.getElementById('prof-name').textContent=user.name;
+  document.getElementById('prof-phone').textContent=user.phone;
+  document.getElementById('prof-badge').textContent=icon+' '+user.role;
+  document.getElementById('prof-name2').textContent=user.name;
+  document.getElementById('prof-phone2').textContent=user.phone;
+  document.getElementById('prof-role').textContent=user.role;
+  document.getElementById('mc-avatar').textContent=first;
+  document.getElementById('mc-name').textContent=user.name;
+  document.getElementById('mc-id').textContent='ID: '+user.id;
+}
+
+// ══════════════════════════════════════════════
+//  ЖАРДАМЧЫЛАР
+// ══════════════════════════════════════════════
+function showErr(inputId,errId,msg){
+  document.getElementById(inputId).classList.add('error');
+  const e=document.getElementById(errId);
+  if(e){e.textContent=msg;e.classList.add('on');}
+}
+function clearErrors(){
+  document.querySelectorAll('.inp').forEach(i=>i.classList.remove('error'));
+  document.querySelectorAll('.err-msg').forEach(e=>e.classList.remove('on'));
+}
+
+// ══════════════════════════════════════════════
+//  TAB SWITCH
+// ══════════════════════════════════════════════
+function tab(name){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.nav-btn').forEach(n=>n.classList.remove('on'));
+  document.getElementById('p-'+name).classList.add('on');
+  document.getElementById('nav-'+name).classList.add('on');
+  if(name==='doctors')renderDocs(filtDocs());
+  if(name==='medicines')renderMeds(filtMeds());
+  if(name==='pharmacy')renderPills(filtPills());
+  if(name==='medpoints')renderMPs(filtMPs());
+}
+
+// ══════════════════════════════════════════════
+//  МААЛЫМАТТАР
+// ══════════════════════════════════════════════
+const DOCTORS=[
+  {name:'Гульмира Асанова',spec:'Терапевт',exp:'12 лет',rating:'4.9',clinic:'Поликлиника №1 Ош',cat:'терапевт',free:true,bg:'#E0F5EE',tc:'#085041'},
+  {name:'Канат Жумабеков',spec:'Кардиолог',exp:'8 лет',rating:'4.8',clinic:'Кардиоцентр КГ',cat:'кардиолог',free:false,bg:'#FCEBEB',tc:'#791F1F'},
+  {name:'Айнура Мамытова',spec:'Педиатр',exp:'15 лет',rating:'5.0',clinic:'Детская больница',cat:'педиатр',free:true,bg:'#E6F1FB',tc:'#0C447C'},
+  {name:'Бекзат Усупов',spec:'Невролог',exp:'10 лет',rating:'4.7',clinic:'Нейроцентр Ош',cat:'невролог',free:true,bg:'#EEEDFE',tc:'#3C3489'},
+  {name:'Чолпон Эркинова',spec:'Хирург',exp:'20 лет',rating:'4.9',clinic:'Национальный госпиталь',cat:'хирург',free:false,bg:'#FAEEDA',tc:'#633806'},
+  {name:'Нурбек Садыков',spec:'Окулист',exp:'6 лет',rating:'4.6',clinic:'Клиника «Зрение»',cat:'окулист',free:true,bg:'#EAF3DE',tc:'#27500A'},
+  {name:'Жылдыз Токоева',spec:'Гинеколог',exp:'14 лет',rating:'4.8',clinic:'Перинатальный центр',cat:'гинеколог',free:true,bg:'#FBEAF0',tc:'#72243E'},
+  {name:'Алмаз Дуйшеев',spec:'Стоматолог',exp:'9 лет',rating:'4.7',clinic:'AlDent Клиника',cat:'стоматолог',free:false,bg:'#F1EFE8',tc:'#444441'},
+  {name:'Руслан Абдыкадыров',spec:'Дерматолог',exp:'11 лет',rating:'4.7',clinic:'Дерма Клиника Ош',cat:'дерматолог',free:true,bg:'#FAEEDA',tc:'#633806'},
+  {name:'Мээрим Сатыбалдиева',spec:'Эндокринолог',exp:'7 лет',rating:'4.8',clinic:'Эндо Центр КГ',cat:'эндокринолог',free:true,bg:'#E0F5EE',tc:'#085041'},
+];
+const DOC_CATS=['all','терапевт','кардиолог','педиатр','невролог','хирург','окулист','гинеколог','стоматолог','дерматолог','эндокринолог'];
+const DOC_LABELS={all:'Все',терапевт:'Терапевт',кардиолог:'Кардиолог',педиатр:'Педиатр',невролог:'Невролог',хирург:'Хирург',окулист:'Окулист',гинеколог:'Гинеколог',стоматолог:'Стоматолог',дерматолог:'Дерматолог',эндокринолог:'Эндокринолог'};
+const SLOTS=['09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00'];
+const BUSY=['09:00','11:00','14:00'];
+
+const MEDICINES=[
+  {name:'Парацетамол',generic:'Ацетаминофен 500мг',cat:'болеутоляющие',rx:false,price:'35 сом',icon:'💊',bg:'#E0F5EE'},
+  {name:'Амоксициллин',generic:'Амоксициллин 250мг',cat:'антибиотики',rx:true,price:'120 сом',icon:'🧪',bg:'#FCEBEB'},
+  {name:'Лозартан',generic:'Лозартан 50мг',cat:'давление',rx:true,price:'180 сом',icon:'🩺',bg:'#E6F1FB'},
+  {name:'Аспирин',generic:'Ацетилсалициловая кислота 100мг',cat:'сердце',rx:false,price:'40 сом',icon:'❤️',bg:'#FCEBEB'},
+  {name:'Ибупрофен',generic:'Ибупрофен 400мг',cat:'болеутоляющие',rx:false,price:'55 сом',icon:'💊',bg:'#FAEEDA'},
+  {name:'Метформин',generic:'Метформин 500мг',cat:'диабет',rx:true,price:'95 сом',icon:'🧬',bg:'#EAF3DE'},
+  {name:'Витамин D3',generic:'Холекальциферол 2000МЕ',cat:'витамины',rx:false,price:'210 сом',icon:'🌿',bg:'#FAEEDA'},
+  {name:'Ципрофлоксацин',generic:'Ципрофлоксацин 500мг',cat:'антибиотики',rx:true,price:'150 сом',icon:'🧪',bg:'#FCEBEB'},
+  {name:'Омепразол',generic:'Омепразол 20мг',cat:'желудок',rx:false,price:'75 сом',icon:'💊',bg:'#E0F5EE'},
+  {name:'Витамин C',generic:'Аскорбиновая кислота 500мг',cat:'витамины',rx:false,price:'48 сом',icon:'🍊',bg:'#FAEEDA'},
+  {name:'Эналаприл',generic:'Эналаприл 10мг',cat:'давление',rx:true,price:'65 сом',icon:'🩺',bg:'#E6F1FB'},
+  {name:'Аторвастатин',generic:'Аторвастатин 20мг',cat:'сердце',rx:true,price:'320 сом',icon:'❤️',bg:'#FCEBEB'},
+  {name:'Кларитромицин',generic:'Кларитромицин 500мг',cat:'антибиотики',rx:true,price:'180 сом',icon:'🧪',bg:'#FCEBEB'},
+  {name:'Валсартан',generic:'Валсартан 80мг',cat:'давление',rx:true,price:'250 сом',icon:'🩺',bg:'#E6F1FB'},
+  {name:'Магний B6',generic:'Магния лактат + Пиридоксин',cat:'витамины',rx:false,price:'130 сом',icon:'🌿',bg:'#EAF3DE'},
+];
+const MED_CATS=['all','антибиотики','сердце','болеутоляющие','витамины','давление','желудок','диабет'];
+const MED_LABELS={all:'Все',антибиотики:'Антибиотики',сердце:'Сердце',болеутоляющие:'От боли',витамины:'Витамины',давление:'Давление',желудок:'Желудок',диабет:'Диабет'};
+
+const PILLS=[
+  {name:'Парацетамол',sub:'500мг · обезболивающее',form:'таблетки',color:'#E0F5EE',tc:'#085041',rx:false,price:'35 сом'},
+  {name:'Амоксициллин',sub:'250мг · антибиотик',form:'капсулы',color:'#FCEBEB',tc:'#791F1F',rx:true,price:'120 сом'},
+  {name:'Нурофен суспензия',sub:'100мг/5мл · педиатрический',form:'сироп',color:'#E6F1FB',tc:'#0C447C',rx:false,price:'85 сом'},
+  {name:'Цефтриаксон',sub:'1г · для инъекций',form:'ампулы',color:'#EEEDFE',tc:'#3C3489',rx:true,price:'220 сом'},
+  {name:'Диклофенак',sub:'75мг/мл · НПВС',form:'ампулы',color:'#FAEEDA',tc:'#633806',rx:true,price:'95 сом'},
+  {name:'Лозартан',sub:'50мг · от давления',form:'таблетки',color:'#EAF3DE',tc:'#27500A',rx:true,price:'180 сом'},
+  {name:'Пантопразол',sub:'40мг · для желудка',form:'капсулы',color:'#FBEAF0',tc:'#72243E',rx:false,price:'130 сом'},
+  {name:'Гидрокортизон',sub:'1% · противовоспалительное',form:'мазь',color:'#FAEEDA',tc:'#633806',rx:true,price:'75 сом'},
+  {name:'Бромгексин',sub:'4мг/5мл · от кашля',form:'сироп',color:'#E6F1FB',tc:'#0C447C',rx:false,price:'55 сом'},
+  {name:'Аторвастатин',sub:'20мг · холестерин',form:'таблетки',color:'#FCEBEB',tc:'#791F1F',rx:true,price:'320 сом'},
+  {name:'Витамин D3',sub:'2000МЕ · иммунитет',form:'капсулы',color:'#EAF3DE',tc:'#27500A',rx:false,price:'210 сом'},
+  {name:'Диклоран гель',sub:'1% · суставы',form:'мазь',color:'#E0F5EE',tc:'#085041',rx:false,price:'65 сом'},
+  {name:'Цетиризин',sub:'10мг · антигистаминное',form:'таблетки',color:'#EEEDFE',tc:'#3C3489',rx:false,price:'45 сом'},
+  {name:'Инсулин НовоРапид',sub:'100МЕ/мл · инсулин',form:'ампулы',color:'#E6F1FB',tc:'#0C447C',rx:true,price:'680 сом'},
+  {name:'Кодеин сироп',sub:'15мг/5мл · от кашля',form:'сироп',color:'#F1EFE8',tc:'#444441',rx:true,price:'110 сом'},
+];
+const PILL_FORMS=[
+  {label:'Все формы',value:'all',icon:'💊',count:48},
+  {label:'Таблетки',value:'таблетки',icon:'⬛',count:22},
+  {label:'Капсулы',value:'капсулы',icon:'🔴',count:12},
+  {label:'Сиропы',value:'сироп',icon:'🧪',count:8},
+  {label:'Ампулы',value:'ампулы',icon:'💉',count:6},
+  {label:'Мази',value:'мазь',icon:'🟡',count:8},
+];
+const MED_POINTS=[
+  {name:'Национальный госпиталь КР',type:'Больница',address:'ул. Тоголок Молдо, 1, Ош',phone:'0312 66-18-00',doctors:142,beds:800},
+  {name:'Студ. поликлиника КГМА',type:'Студ. поликлиника',address:'ул. Ахунбаева, 92, Ош',phone:'0312 54-19-30',doctors:28,beds:0},
+  {name:'Городская поликлиника №1',type:'Поликлиника',address:'ул. Боконбаева, 112, Ош',phone:'0312 45-23-11',doctors:56,beds:0},
+  {name:'Перинатальный центр',type:'Больница',address:'ул. Токтогула, 187, Ош',phone:'0312 56-47-90',doctors:67,beds:300},
+  {name:'Аптека «Гиппократ»',type:'Аптека',address:'ул. Манаса, 42, Ош',phone:'0312 32-10-45',doctors:0,beds:0},
+  {name:'Студ. поликлиника КНУ',type:'Студ. поликлиника',address:'ул. Фрунзе, 547, Ош',phone:'0312 43-55-28',doctors:18,beds:0},
+  {name:'Кардиоцентр Кыргызстана',type:'Больница',address:'ул. Тоголок Молдо, 3, Ош',phone:'0312 66-18-50',doctors:45,beds:200},
+];
+const MP_TYPES=['all','Больница','Поликлиника','Студ. поликлиника','Аптека'];
+const MP_LABELS={all:'Все',Больница:'Больницы',Поликлиника:'Поликлиники','Студ. поликлиника':'Студ. поликлиники',Аптека:'Аптеки'};
+
+// ── Chips ──
+function buildChips(id,cats,labels,active,fn){
+  document.getElementById(id).innerHTML=cats.map(c=>`<div class="chip${c===active?' on':''}" onclick="${fn.name}('${c}')">${labels[c]}</div>`).join('');
+}
+
+// ── DOCTORS ──
+const S={docCat:'all',medCat:'all',pillForm:'all',mpType:'all'};
+function filtDocs(q=''){return DOCTORS.filter(d=>(S.docCat==='all'||d.cat===S.docCat)&&(!q||d.name.toLowerCase().includes(q)||d.spec.toLowerCase().includes(q)));}
+function filterDocs(v){renderDocs(filtDocs(v.toLowerCase()));}
+function setDocCat(c){S.docCat=c;document.querySelectorAll('#doc-chips .chip').forEach(el=>el.classList.toggle('on',el.textContent===DOC_LABELS[c]));renderDocs(filtDocs());}
+function renderDocs(list){
+  document.getElementById('doc-list').innerHTML=list.length?list.map((d,i)=>`
+  <div class="doc-card">
+    <div class="doc-top" onclick="toggleSched(${i})">
+      <div class="doc-ava" style="background:${d.bg};color:${d.tc};">${d.name[0]}</div>
+      <div><div class="dn">${d.name}</div><div class="ds">${d.spec}</div><div class="dm">★ ${d.rating} · Стаж ${d.exp} · ${d.clinic}</div>
+      <span class="da ${d.free?'af':'ab2'}">${d.free?'✓ Свободен':'✗ Занят'}</span></div>
+    </div>
+    <div class="sched" id="sd${i}">
+      <div style="font-size:12px;color:var(--g600);margin-bottom:8px;">Выберите время — ${d.name}</div>
+      <div class="slots">${SLOTS.map(s=>`<div class="slot ${BUSY.includes(s)?'busy':'free'}" ${!BUSY.includes(s)?`onclick="bookSlot('${d.name}','${s}')"`:''} >${s}</div>`).join('')}</div>
+    </div>
+  </div>`).join(''):'<p style="text-align:center;color:var(--g500);padding:32px 0;">Врачи не найдены</p>';
+}
+function toggleSched(i){const el=document.getElementById('sd'+i);if(!el)return;const o=el.style.display==='block';document.querySelectorAll('.sched').forEach(s=>s.style.display='none');if(!o)el.style.display='block';}
+function bookSlot(doc,time){alert('✅ Запись подтверждена!\nВрач: '+doc+'\nВремя: '+time);}
+
+// ── MEDICINES ──
+function filtMeds(q=''){return MEDICINES.filter(m=>(S.medCat==='all'||m.cat===S.medCat)&&(!q||m.name.toLowerCase().includes(q)||m.generic.toLowerCase().includes(q)));}
+function filterMeds(v){renderMeds(filtMeds(v.toLowerCase()));}
+function setMedCat(c){S.medCat=c;document.querySelectorAll('#med-chips .chip').forEach(el=>el.classList.toggle('on',el.textContent===MED_LABELS[c]));renderMeds(filtMeds());}
+function renderMeds(list){
+  document.getElementById('med-list').innerHTML=list.length?list.map(m=>`
+  <div class="med-c"><div class="med-ico" style="background:${m.bg};">${m.icon}</div>
+  <div><div class="mn">${m.name}</div><div class="mg">${m.generic}</div>
+  <div class="mt2"><span class="tag ${m.rx?'tag-red':'tag-green'}">${m.rx?'℞ Рецепт':'OTC'}</span><span class="tag tag-amber">${m.price}</span></div></div></div>`).join(''):'<p style="text-align:center;color:var(--g500);padding:32px 0;">Не найдено</p>';
+}
+
+// ── PHARMACY ──
+function buildPillForms(){
+  document.getElementById('pill-forms').innerHTML=PILL_FORMS.map(f=>`
+  <div class="fcat${f.value==='all'?' on':''}" onclick="setPillForm('${f.value}')">
+    <span style="font-size:20px;">${f.icon}</span>
+    <div><div class="fcn">${f.label}</div><div class="fcc">${f.count} позиций</div></div>
+  </div>`).join('');
+}
+function filtPills(q=''){return PILLS.filter(p=>(S.pillForm==='all'||p.form===S.pillForm)&&(!q||p.name.toLowerCase().includes(q)||p.sub.toLowerCase().includes(q)));}
+function filterPills(v){renderPills(filtPills(v.toLowerCase()));}
+function setPillForm(f){S.pillForm=f;document.querySelectorAll('#pill-forms .fcat').forEach((el,i)=>el.classList.toggle('on',PILL_FORMS[i].value===f));renderPills(filtPills());}
+function renderPills(list){
+  document.getElementById('pill-list').innerHTML=list.length?list.map(p=>`
+  <div class="pill-c">
+    <div class="pill-v" style="background:${p.color};border:.5px solid ${p.tc};"></div>
+    <div style="flex:1;min-width:0;"><div class="pn">${p.name}</div><div class="ps">${p.sub}</div>
+    <div class="pt"><span class="tag tag-blue">${p.form}</span><span class="tag ${p.rx?'tag-red':'tag-green'}">${p.rx?'℞':'OTC'}</span><span class="tag tag-amber">${p.price}</span></div></div>
+    <button class="pfb" onclick="alert('Ищем ${p.name} в аптеках Оша...')">Найти</button>
+  </div>`).join(''):'<p style="text-align:center;color:var(--g500);padding:32px 0;">Не найдено</p>';
+}
+
+// ── MEDPOINTS ──
+function filtMPs(q=''){return MED_POINTS.filter(mp=>(S.mpType==='all'||mp.type===S.mpType)&&(!q||mp.name.toLowerCase().includes(q)||mp.address.toLowerCase().includes(q)));}
+function filterMPs(v){renderMPs(filtMPs(v.toLowerCase()));}
+function setMpType(t){S.mpType=t;document.querySelectorAll('#mp-chips .chip').forEach(el=>el.classList.toggle('on',el.textContent===MP_LABELS[t]));renderMPs(filtMPs());}
+function renderMPs(list){
+  document.getElementById('mp-list').innerHTML=list.length?list.map(mp=>`
+  <div class="mp-c">
+    <div class="mp-h"><div class="mp-nm">${mp.name}</div><span class="tag ${mp.type.includes('Студ')?'tag-green':mp.type==='Аптека'?'tag-amber':'tag-blue'}">${mp.type}</span></div>
+    <div class="mp-ad">📍 ${mp.address}</div>
+    <div class="mp-ph2">📞 ${mp.phone}${mp.doctors>0?' · 🩺 '+mp.doctors+' врачей':''}${mp.beds>0?' · 🛏 '+mp.beds+' коек':''}</div>
+    <div class="mp-row">
+      <button class="mp-btn" onclick="alert('Открываем карту...')">🗺 Карта</button>
+      <button class="mp-btn" onclick="alert('Звоним: ${mp.phone}')">📞 Звонок</button>
+      <button class="mp-btn pr" onclick="alert('Запись в ${mp.name}')">Записаться</button>
+    </div>
+  </div>`).join(''):'<p style="text-align:center;color:var(--g500);padding:32px 0;">Не найдено</p>';
+}
+</script>
+</body>
+</html>
